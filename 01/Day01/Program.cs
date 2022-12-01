@@ -23,4 +23,12 @@ foreach (string line in inputData)
     }
 }
 
-Console.WriteLine(calorieTotals.Max());
+Console.WriteLine("Challenge 1 Answer: " + calorieTotals.Max());
+
+// Challenge 2
+calorieTotals.Sort();
+calorieTotals.Reverse();
+
+List<int> Top3ElfsByTotalCalories = calorieTotals.GetRange(0, 3);
+
+Console.WriteLine("Challenge 2 Answer: " + Top3ElfsByTotalCalories.Sum());
