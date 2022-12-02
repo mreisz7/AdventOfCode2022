@@ -1,6 +1,6 @@
 ﻿// Read in the Challenge 1 input
-//string[] inputData = System.IO.File.ReadAllLines(@"..\..\..\ChallengeInput_Test.txt");
-string[] inputData = System.IO.File.ReadAllLines(@"..\..\..\ChallengeInput.txt");
+//string[] inputData = System.IO.File.ReadAllLines(@".\ChallengeInput_Test.txt");
+string[] inputData = System.IO.File.ReadAllLines(@".\ChallengeInput.txt");
 
 int gameScoreChallenge1 = 0;
 int gameScoreChallenge2 = 0;
