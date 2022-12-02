@@ -1,4 +1,4 @@
-﻿// Read in the Challenge 1 input
+﻿// Read in the Challenge input
 //string[] inputData = System.IO.File.ReadAllLines(@".\Challenge1Input_Test.txt");
 string[] inputData = System.IO.File.ReadAllLines(@".\Challenge1Input.txt");
 
