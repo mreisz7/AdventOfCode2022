@@ -2,7 +2,8 @@
 //string[] inputData = System.IO.File.ReadAllLines(@"..\..\..\ChallengeInput_Test.txt");
 string[] inputData = System.IO.File.ReadAllLines(@"..\..\..\ChallengeInput.txt");
 
-int gameScore = 0;
+int gameScoreChallenge1 = 0;
+int gameScoreChallenge2 = 0;
 
 foreach (string game in inputData)
 {
@@ -10,10 +11,15 @@ foreach (string game in inputData)
     string opponentMove = gameMoves[0];
     string yourMove = gameMoves[1];
 
-    gameScore += CalculateScore(opponentMove, yourMove);
+    Outcome desiredOutcome = GetDesiredOutcome(gameMoves[1]);
+    string yourMoveChallenge2 = MoveToAchieveDesiredOutcome(opponentMove, desiredOutcome);
+
+    gameScoreChallenge1 += CalculateScore(opponentMove, yourMove);
+    gameScoreChallenge2 += CalculateScore(opponentMove, yourMoveChallenge2);
 }
 
-Console.WriteLine("Challenge 1 Score: " + gameScore);
+Console.WriteLine("Challenge 1 Score: " + gameScoreChallenge1);
+Console.WriteLine("Challenge 2 Score: " + gameScoreChallenge2);
 
 int CalculateScore(string opponentsMove, string yourMove)
 {
@@ -98,6 +104,58 @@ Outcome GameOutcome(string opponentsMove, string yourMove)
             throw new Exception("You played an unexpected move");
         default:
             throw new Exception("Your opponent played an unexpected move");
+    }
+}
+
+string MoveToAchieveDesiredOutcome(string opponentMove, Outcome desiredOutcome)
+{
+    switch(desiredOutcome)
+    {
+        case Outcome.Lose:
+            if (opponentMove == "A") // Rock
+                return "Z"; // Scissors
+            if (opponentMove == "B") // Paper
+                return "X"; // Rock
+            if (opponentMove == "C") // Scissors
+                return "Y"; // Paper
+            throw new Exception("Your opponent played an unexpected move");
+        case Outcome.Tie:
+            if (opponentMove == "A") // Rock
+                return "X"; // Rock
+            if (opponentMove == "B") // Paper
+                return "Y"; // Paper
+            if (opponentMove == "C") // Scissors
+                return "Z"; // Scissors
+            throw new Exception("Your opponent played an unexpected move");
+        case Outcome.Win:
+            if (opponentMove == "A") // Rock
+                return "Y"; // Paper
+            if (opponentMove == "B") // Paper
+                return "Z"; // Scissors
+            if (opponentMove == "C") // Scissors
+                return "X"; // Rock
+            throw new Exception("Your opponent played an unexpected move");
+    }
+    throw new Exception("An unexpected input was provided");
+}
+
+Outcome GetDesiredOutcome(string inputValue)
+{
+    // Desired Outcome Mapping
+    // "X" = Lose
+    // "Y" = Tie
+    // "Z" = Win
+
+    switch (inputValue)
+    {
+        case "X":
+            return Outcome.Lose;
+        case "Y":
+            return Outcome.Tie;
+        case "Z":
+            return Outcome.Win;
+        default:
+            throw new Exception("An invalid input was provided");
     }
 }
 
