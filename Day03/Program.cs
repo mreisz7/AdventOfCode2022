@@ -1,10 +1,9 @@
 ﻿// Read in the Challenge input
-using System.Reflection.PortableExecutable;
-
 //string[] inputData = System.IO.File.ReadAllLines(@".\ChallengeInput_Test.txt");
 string[] inputData = System.IO.File.ReadAllLines(@".\ChallengeInput.txt");
 
 List<char> mismatchedCharacters = new();
+List<char> groupKeyValues = new();
 
 Dictionary<char, int> characterValue = new Dictionary<char, int>()
 {
@@ -62,18 +61,35 @@ Dictionary<char, int> characterValue = new Dictionary<char, int>()
     { 'Z', 52 },
 };
 
-foreach (string line in inputData)
+HashSet<char> uniqueCycleItems = new();
+
+for (int i = 0; i < inputData.Length; i++)
 {
-    if (line.Length % 2 != 0)
+    if (inputData[i].Length % 2 != 0)
         throw new Exception("Unexpected line length");
 
-    string compartment1Values = line.Substring(0, line.Length / 2);
-    string compartment2Values = line.Substring(line.Length / 2, line.Length / 2);
-
-    Console.WriteLine(compartment1Values);
-    Console.WriteLine(compartment2Values);
+    string compartment1Values = inputData[i].Substring(0, inputData[i].Length / 2);
+    string compartment2Values = inputData[i].Substring(inputData[i].Length / 2, inputData[i].Length / 2);
 
     HashSet<char> unduplicatedDuplicates = new();
+
+    int cyclePosition = (i % 3) + 1;
+    if (cyclePosition == 1)
+    {
+        uniqueCycleItems = inputData[i].ToHashSet<char>();
+    }
+    else
+    {
+        HashSet<char> uniqueItemValues = inputData[i].ToHashSet<char>();
+        uniqueCycleItems.IntersectWith(uniqueItemValues);
+    }
+    if (cyclePosition == 3)
+    {
+        if (uniqueCycleItems.Count != 1)
+            throw new Exception("More than 1 item left in this group");
+
+        groupKeyValues.Add(uniqueCycleItems.Single<char>());
+    }
 
     foreach (char item in compartment1Values)
     {
@@ -86,9 +102,10 @@ foreach (string line in inputData)
     mismatchedCharacters.AddRange(unduplicatedDuplicates);
 }
 
-Console.WriteLine("Challenge 1 Answer: " + CalculateValues(mismatchedCharacters));
+Console.WriteLine("Challenge 1 Answer: " + CalculateValueTotals(mismatchedCharacters));
+Console.WriteLine("Challenge 2 Answer: " + CalculateValueTotals(groupKeyValues));
 
-int CalculateValues(List<char> mismatchedCharacters)
+int CalculateValueTotals(List<char> mismatchedCharacters)
 {
     int totalValue = 0;
     foreach (char item in mismatchedCharacters)
