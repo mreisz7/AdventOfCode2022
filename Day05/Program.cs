@@ -5,6 +5,7 @@
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
 Dictionary<int, CrateStack> crateStacks = new();
+Dictionary<int, CrateStack> crateStacksChallenge2 = new();
 List<(int numberOfCrates, int fromStack, int toStack)> stackingInstructions = new();
 
 // Example string: move 2 from 2 to 5
@@ -23,10 +24,15 @@ for (int i = inputData.Length - 1; i >= 0; i--)
                 if (!crateStacks.ContainsKey((j + 1)))
                     crateStacks[(j + 1)] = new CrateStack();
                 crateStacks[(j + 1)].PlaceOne(inputData[i].ElementAt((j * 4) + 1));
+
+                if (!crateStacksChallenge2.ContainsKey((j + 1)))
+                    crateStacksChallenge2[(j + 1)] = new CrateStack();
+                crateStacksChallenge2[(j + 1)].PlaceOne(inputData[i].ElementAt((j * 4) + 1));
             }
         }
     }
 }
+
 
 // Now get the instruction sets
 foreach (string line in inputData)
@@ -50,12 +56,23 @@ foreach ((int numberOfCrates, int fromStack, int toStack) instructionSet in stac
         // Place them in the "toStack"
         crateStacks[instructionSet.toStack].PlaceOne(crateToMove);
     }
+
+    // Challenge 2 moves
+    List<char> cratesToMove = crateStacksChallenge2[instructionSet.fromStack].TakeN(instructionSet.numberOfCrates);
+    crateStacksChallenge2[instructionSet.toStack].PlaceN(cratesToMove);
 }
 
 Console.Write("Challenge 1 Answer: ");
 for (int i = 0; i < crateStacks.Count; i++)
 {
     Console.Write(crateStacks[(i + 1)].SeeTopCrate());
+}
+Console.WriteLine();
+
+Console.Write("Challenge 2 Answer: ");
+for (int i = 0; i < crateStacks.Count; i++)
+{
+    Console.Write(crateStacksChallenge2[(i + 1)].SeeTopCrate());
 }
 Console.WriteLine();
 
@@ -71,6 +88,25 @@ class CrateStack
     public void PlaceOne(char crate)
     {
         crates.Push(crate);
+    }
+
+    public List<char> TakeN(int numberOfCrates)
+    {
+        List<char> crateStack = new List<char>();
+        for (int i = 0; i < numberOfCrates; i++)
+        {
+            crateStack.Add(crates.Pop());
+        }
+        crateStack.Reverse();
+        return crateStack;
+    }
+
+    public void PlaceN(List<char> crateStack)
+    {
+        foreach (char crate in crateStack)
+        {
+            crates.Push(crate);
+        }
     }
 
     public char SeeTopCrate()
