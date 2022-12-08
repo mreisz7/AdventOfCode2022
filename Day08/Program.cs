@@ -29,6 +29,21 @@ allVisibleTreeCoordinates.UnionWith(TraverseTreeline(Direction.Right, maxValue, 
 
 Console.WriteLine($"Challenge 1 Answer: {allVisibleTreeCoordinates.Count}");
 
+int bestTreeScenicScore = 0;
+for (int x = 0; x < xLength; x++)
+{
+    for (int y = 0; y < yLength; y++)
+    {
+        int scenicScore = CalculateScenicScore((x, y), treeGrid);
+        if (scenicScore > bestTreeScenicScore)
+        {
+            bestTreeScenicScore = scenicScore;
+        }
+    }
+}
+
+Console.WriteLine($"Challeng 2 Answer: {bestTreeScenicScore}");
+
 HashSet<(int x, int y)> TraverseTreeline(Direction direction, int maxHeight, int[,] treeGrid)
 {
     // Set the default start/end/increment for down and right
@@ -75,6 +90,86 @@ HashSet<(int x, int y)> TraverseTreeline(Direction direction, int maxHeight, int
     }
     
     return visibleTreeCoordinates;
+}
+
+int CalculateScenicScore((int x, int y) tree, int[,] treeGrid)
+{
+    int scenicScore = 1;
+    int targetTreeHeight = treeGrid[tree.x, tree.y];
+    int treeHeightInQuestion;
+
+    if (tree.x == 0 || tree.x == treeGrid.GetLength(0) || tree.y == 0 || tree.y == treeGrid.GetLength(1))
+        return 0;
+
+    // Calculate up
+    int treesVisibleUp = 0;
+    for (int x = tree.x - 1; x >= 0; x--)
+    {
+        treeHeightInQuestion = treeGrid[x, tree.y];
+        if (treeHeightInQuestion < targetTreeHeight)
+        {
+            treesVisibleUp++;
+        }
+        if (treeHeightInQuestion >= targetTreeHeight)
+        {
+            treesVisibleUp++;
+            break;
+        }
+    }
+    scenicScore *= treesVisibleUp;
+
+    // Calculate down
+    int treesVisibleDown = 0;
+    for (int x = tree.x + 1; x < treeGrid.GetLength(0); x++)
+    {
+        treeHeightInQuestion = treeGrid[x, tree.y];
+        if (treeHeightInQuestion < targetTreeHeight)
+        {
+            treesVisibleDown++;
+        }
+        if (treeHeightInQuestion >= targetTreeHeight)
+        {
+            treesVisibleDown++;
+            break;
+        }
+    }
+    scenicScore *= treesVisibleDown;
+
+    // Calculate left
+    int treesVisibleLeft = 0;
+    for (int y = tree.y - 1; y >= 0; y--)
+    {
+        treeHeightInQuestion = treeGrid[tree.x, y];
+        if (treeHeightInQuestion < targetTreeHeight)
+        {
+            treesVisibleLeft++;
+        }
+        if (treeHeightInQuestion >= targetTreeHeight)
+        {
+            treesVisibleLeft++;
+            break;
+        }
+    }
+    scenicScore *= treesVisibleLeft;
+
+    // Calculate right
+    int treesVisibleRight = 0;
+    for (int y = tree.y + 1; y < treeGrid.GetLength(1); y++)
+    {
+        treeHeightInQuestion = treeGrid[tree.x, y];
+        if (treeHeightInQuestion < targetTreeHeight)
+        {
+            treesVisibleRight++;
+        }
+        if (treeHeightInQuestion >= targetTreeHeight)
+        {
+            treesVisibleRight++;
+            break;
+        }
+    }
+    scenicScore *= treesVisibleRight;
+
+    return scenicScore;
 }
 
 enum Direction
