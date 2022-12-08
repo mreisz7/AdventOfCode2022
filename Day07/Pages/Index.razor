@@ -1,0 +1,132 @@
+﻿@page "/"
+
+<div class="output">
+    @outputHistory
+</div>
+<div class="cursor">
+    <span>$ </span>
+    <input type="text"
+           class="command-input"
+           @bind=@commandString
+           @bind:event="oninput"
+           @ref=@elementRef
+           @onblur=@HandleLoseFocus
+           @onkeydown=@HandleKeyDown
+    />
+</div>
+
+@code {
+    //private RootDirectory root = new RootDirectory("./ChallengeInput_Test.txt");
+    private RootDirectory root = new RootDirectory("./ChallengeInput.txt");
+
+    private Directory? directoryPointer;
+
+    private string outputHistory = string.Empty;
+
+    private string commandString = string.Empty;
+
+    private ElementReference elementRef;
+
+    private void HandleLoseFocus()
+    {
+        elementRef.FocusAsync();
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Code == "Enter")
+        {
+            string command = commandString.Split(" ")[0];
+            string commandArg = commandString.Length > command.Length ? commandString[(command.Length + 1)..].Trim() : string.Empty;
+            switch (command)
+            {
+                // TODO: Move as much of this logic into the Directory classes as possible
+                case "cd":
+                    outputHistory += $"$ {commandString}";
+                    outputHistory += System.Environment.NewLine;
+                    switch (commandArg)
+                    {
+                        case "/":
+                            directoryPointer = root;
+                            break;
+                        case "..":
+                            if (directoryPointer is SubDirectory)
+                            {
+                                directoryPointer = directoryPointer.ParentDirectory;
+                            }
+                            break;
+                        default:
+                            SubDirectory? targetDirectory = directoryPointer?
+                                .SubDirectories
+                                .SingleOrDefault(d => d.DirectoryName.Equals(commandArg, StringComparison.InvariantCultureIgnoreCase));
+                            if (targetDirectory is not null)
+                            {
+                                directoryPointer = targetDirectory;
+                            } 
+                            else
+                            {
+                                outputHistory += $"Directory '{commandArg}' not found";
+                                outputHistory += System.Environment.NewLine;
+                            }
+                            break;
+                    }
+                    commandString = string.Empty;
+                    break;
+                case "ls":
+                    outputHistory += $"$ {commandString}";
+                    outputHistory += System.Environment.NewLine;
+                    outputHistory += directoryPointer?.ListDirectoryContents();
+                    commandString = string.Empty;
+                    break;
+                case "clear":
+                case "cls":
+                    outputHistory = string.Empty;
+                    commandString = string.Empty;
+                    break;
+                case "solve":
+                    outputHistory += $"$ {commandString}";
+                    outputHistory += System.Environment.NewLine;
+                    switch (commandArg)
+                    {
+                        case "1":
+                            outputHistory += $"Challenge 1 Answer: {root.SolveChallenge1()}";
+                            outputHistory += System.Environment.NewLine;
+                            break;
+                        case "2":
+                            outputHistory += $"Challenge 2 Answer: {root.SolveChallenge2()}";
+                            outputHistory += System.Environment.NewLine;
+                            break;
+                        case "":
+                            outputHistory += $"Challenge 1 Answer: {root.SolveChallenge1()}";
+                            outputHistory += System.Environment.NewLine;
+                            outputHistory += $"Challenge 2 Answer: {root.SolveChallenge2()}";
+                            outputHistory += System.Environment.NewLine;
+                            break;
+                        default:
+                            outputHistory += "Command not recognized";
+                            outputHistory += System.Environment.NewLine;
+                            break;
+                    }
+                    commandString = string.Empty;
+                    break;
+                default:
+                    outputHistory += $"$ {commandString}";
+                    outputHistory += System.Environment.NewLine;
+                    commandString = string.Empty;
+                    break;
+            }
+            StateHasChanged();
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        elementRef.FocusAsync();
+    }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        directoryPointer = root;
+    }
+}
