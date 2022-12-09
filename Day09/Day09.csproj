@@ -11,7 +11,10 @@
     <None Update="ChallengeInput.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="ChallengeInput_Test.txt">
+    <None Update="ChallengeInput_Test2.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="ChallengeInput_Test1.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
