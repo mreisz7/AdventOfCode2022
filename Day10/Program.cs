@@ -36,3 +36,22 @@ int totalSignalStrength = registerValuesByCycle.Where(x => ((x.Key + 20) % 40 ==
 
 Console.WriteLine($"Challenge 1 Answer: {totalSignalStrength}");
 
+Console.WriteLine("Challenge 2 Answer: ");
+
+foreach (int cycleNum in registerValuesByCycle.Keys.Order())
+{
+    int spritePosition = registerValuesByCycle[cycleNum] + 1;
+    int cycleNumByRow = (cycleNum % 40);
+    if (Math.Abs(spritePosition - cycleNumByRow) <= 1)
+    {
+        Console.Write("#");
+    }
+    else
+    {
+        Console.Write(" ");
+    }
+
+    // Add line breaks
+    if (cycleNum % 40 == 0)
+        Console.WriteLine();
+}
