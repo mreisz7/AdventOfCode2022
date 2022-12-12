@@ -25,6 +25,34 @@ long MonkeyBusinessScore = MostActiveMonkey[0] * MostActiveMonkey[1];
 
 Console.WriteLine($"Challenge 1 Answer: {MonkeyBusinessScore}");
 
+// Create a new Dictionary of Monkeys to complete part 2
+Dictionary<int, Monkey> monkeysPart2 = new();
+
+for (int i = 0; i < (inputData.Length + 1) / 7; i++)
+{
+    int startingIndex = i * 7;
+    int endingIndex = startingIndex + 6;
+
+    _ = new Monkey(inputData[startingIndex..endingIndex], monkeysPart2);
+}
+
+HashSet<int> distinctDivisors = monkeysPart2.Values.Select(x => x.DivisibleByTest).ToHashSet<int>();
+long leastCommonDenominator = distinctDivisors.Aggregate(1, (a, b) => a * b);
+
+// Now do 10,000 rounds of the part 2 inspection
+for (int i = 0; i < 10_000; i++)
+{
+    foreach (int monkeyNumber in monkeysPart2.Keys.Order())
+    {
+        monkeysPart2[monkeyNumber].TakeTurnPart2(leastCommonDenominator);
+    }
+}
+
+long[] MostActiveMonkeyPart2 = monkeysPart2.Values.OrderByDescending(x => x.ItemsInspected).Take(2).Select(x => x.ItemsInspected).ToArray();
+long MonkeyBusinessScorePart2 = MostActiveMonkeyPart2[0] * MostActiveMonkeyPart2[1];
+
+Console.WriteLine($"Challenge 2 Answer: {MonkeyBusinessScorePart2}");
+
 class Monkey
 {
     public int Id { get; set; }
@@ -64,6 +92,28 @@ class Monkey
             ItemsInspected++;
             long worryLevel = CalculateWorryLevel(item);
             worryLevel = (long)Math.Floor((float)worryLevel / 3);
+            bool isDivisible = worryLevel % DivisibleByTest == 0;
+            int monkeyToThrowTo;
+            if (isDivisible)
+            {
+                monkeyToThrowTo = MonkeyToThrowToOnTrue;
+            }
+            else
+            {
+                monkeyToThrowTo = MonkeyToThrowToOnFalse;
+            }
+            MonkeyGroup[monkeyToThrowTo].Items.Enqueue(worryLevel);
+        }
+    }
+
+    public void TakeTurnPart2(long divisor)
+    {
+        while (Items.Count > 0)
+        {
+            long item = Items.Dequeue();
+            ItemsInspected++;
+            long worryLevel = CalculateWorryLevel(item);
+            worryLevel %= divisor;
             bool isDivisible = worryLevel % DivisibleByTest == 0;
             int monkeyToThrowTo;
             if (isDivisible)
