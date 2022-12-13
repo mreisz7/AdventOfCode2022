@@ -3,13 +3,10 @@
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
 Dictionary<(int x, int y), int> gridSquares = new();
-Queue<(int x, int y, int distance)> bfsQueue = new();
-HashSet<(int x, int y)> visitedSquares = new();
 
 (int x, int y) startingGridSquare = (-1, -1);
 (int x, int y) destinationGridSquare = (-1, -1);
 
-int shortestPath = -1;
 
 for (int x = 0; x < inputData[0].Length; x++)
 {
@@ -24,63 +21,82 @@ for (int x = 0; x < inputData[0].Length; x++)
     }
 }
 
-// Enqueue the starting point
-bfsQueue.Enqueue((startingGridSquare.x, startingGridSquare.y, 0));
-visitedSquares.Add((startingGridSquare.x, startingGridSquare.y));
-
-while (bfsQueue.Any() && shortestPath < 0)
+int CalculateShortestPath((int x, int y) startingPoint)
 {
-    (int x, int y, int distance) lastGridSquare = bfsQueue.Dequeue();
-    visitedSquares.Add((lastGridSquare.x, lastGridSquare.y));
+    Queue<(int x, int y, int distance)> bfsQueue = new();
+    HashSet<(int x, int y)> visitedSquares = new();
+    int shortestPath = -1;
 
-    CheckNewPath(lastGridSquare, "up");
-    CheckNewPath(lastGridSquare, "down");
-    CheckNewPath(lastGridSquare, "left");
-    CheckNewPath(lastGridSquare, "right");
-}
+    // Enqueue the starting point
+    bfsQueue.Enqueue((startingPoint.x, startingPoint.y, 0));
+    visitedSquares.Add((startingPoint.x, startingPoint.y));
 
-Console.WriteLine($"Challenge 1 Answer: {shortestPath}");
-
-void CheckNewPath((int x, int y, int distance) lastGridSquare, string direction)
-{
-    (int x, int y, int distance) nextGridSquare = lastGridSquare;
-    nextGridSquare.distance++;
-
-    switch (direction)
+    while (bfsQueue.Any() && shortestPath < 0)
     {
-        case "up":
-            nextGridSquare.y -= 1;
-            break;
-        case "down":
-            nextGridSquare.y += 1;
-            break;
-        case "left":
-            nextGridSquare.x -= 1;
-            break;
-        case "right":
-            nextGridSquare.x += 1;
-            break;
-        default:
-            throw new NotImplementedException("Unexpected input");
+        (int x, int y, int distance) lastGridSquare = bfsQueue.Dequeue();
+
+        CheckNewPath(lastGridSquare, "up");
+        CheckNewPath(lastGridSquare, "down");
+        CheckNewPath(lastGridSquare, "left");
+        CheckNewPath(lastGridSquare, "right");
     }
 
-    if (visitedSquares.Contains((nextGridSquare.x, nextGridSquare.y)))
-        return;
 
-    if (gridSquares.ContainsKey((nextGridSquare.x, nextGridSquare.y)) &&
-        gridSquares[(nextGridSquare.x, nextGridSquare.y)] - gridSquares[(lastGridSquare.x, lastGridSquare.y)] <= 1)
+    void CheckNewPath((int x, int y, int distance) lastGridSquare, string direction)
     {
-        if ((nextGridSquare.x, nextGridSquare.y) == destinationGridSquare)
+        (int x, int y, int distance) nextGridSquare = lastGridSquare;
+        nextGridSquare.distance++;
+
+        switch (direction)
         {
-            shortestPath = nextGridSquare.distance;
+            case "up":
+                nextGridSquare.y -= 1;
+                break;
+            case "down":
+                nextGridSquare.y += 1;
+                break;
+            case "left":
+                nextGridSquare.x -= 1;
+                break;
+            case "right":
+                nextGridSquare.x += 1;
+                break;
         }
-        else
+
+        if (visitedSquares.Contains((nextGridSquare.x, nextGridSquare.y)))
+            return;
+
+        if (gridSquares.ContainsKey((nextGridSquare.x, nextGridSquare.y)) &&
+            gridSquares[(nextGridSquare.x, nextGridSquare.y)] - gridSquares[(lastGridSquare.x, lastGridSquare.y)] <= 1)
         {
-            visitedSquares.Add((nextGridSquare.x, nextGridSquare.y));
-            bfsQueue.Enqueue(nextGridSquare);
+            if ((nextGridSquare.x, nextGridSquare.y) == destinationGridSquare)
+            {
+                shortestPath = nextGridSquare.distance;
+            }
+            else
+            {
+                visitedSquares.Add((nextGridSquare.x, nextGridSquare.y));
+                bfsQueue.Enqueue(nextGridSquare);
+            }
         }
     }
+
+    return shortestPath;
 }
+ 
+Console.WriteLine($"Challenge 1 Answer: {CalculateShortestPath(startingGridSquare)}");
+
+List<int> shortestPathsFromLowlands = new();
+
+foreach ((int x, int y) coordinates in gridSquares.Keys)
+{
+    if (gridSquares[coordinates] == 0)
+    {
+        shortestPathsFromLowlands.Add(CalculateShortestPath(coordinates));
+    }
+}
+
+Console.WriteLine($"Challenge 1 Answer: {shortestPathsFromLowlands.Where(x => x > 0).Min()}");
 
 int GetGridSquareHeight(char gridSquareHeight) => gridSquareHeight switch
 {
