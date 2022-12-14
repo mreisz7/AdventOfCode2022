@@ -2,6 +2,9 @@
 //string[] inputData = File.ReadAllLines(@".\ChallengeInput_Test.txt");
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
+// Set the Console Width now
+Console.BufferWidth = 600;
+
 Dictionary<(int x, int y), string> caveMap = new();
 
 foreach (string line in inputData)
@@ -25,22 +28,28 @@ foreach (string line in inputData)
             {
                 if (!caveMap.ContainsKey((x, y)))
                 {
-                    caveMap.Add((x, y), "W");
+                    caveMap.Add((x, y), "#");
                 }
             }
         }
     }
 }
 
-int _Top = 0;
 int _Bottom = caveMap.Keys.Select(x => x.y).Max();
-int _MinX = caveMap.Keys.Select(x => x.x).Min();
-int _MaxX = caveMap.Keys.Select(x => x.x).Max();
 
-DrawCaveWalls(caveMap);
 Console.WriteLine($"Challenge 1 Answer: {StartSandDrop(caveMap)}");
+DrawCaveWalls(caveMap);
 
-Console.WriteLine("wait");
+// Challenge 2
+Dictionary<(int x, int y), string> newCaveMap = new(caveMap);
+
+for (int x = 500 - (_Bottom + 5); x <= 500 + (_Bottom + 5); x++)
+{
+    newCaveMap.Add((x, _Bottom + 2), "#");
+}
+
+Console.WriteLine($"Challenge 2 Answer: {StartSandDrop(newCaveMap)}");
+DrawCaveWalls(newCaveMap);
 
 void DrawCaveWalls(Dictionary<(int x, int y), string> caveMap)
 {
@@ -67,7 +76,7 @@ void DrawCaveWalls(Dictionary<(int x, int y), string> caveMap)
             }
             if (caveMap.ContainsKey((x, y)))
             {
-                Console.Write("#");
+                Console.Write(caveMap[(x, y)]);
             }
             else
             {
@@ -94,31 +103,40 @@ int StartSandDrop(Dictionary<(int x, int y), string> caveMap)
         amountOfSandDropped++;
     }
 
-    Console.SetCursorPosition(0, _Bottom + 2);
+    //Console.SetCursorPosition(0, _Bottom + 2);
     
     return amountOfSandDropped;
 }
 
 bool DroppingSandFallsIntoTheAbyss(Dictionary<(int x, int y), string> caveMap)
 {
+    int top = 0;
+    int bottom = caveMap.Keys.Select(x => x.y).Max();
+    int minX = caveMap.Keys.Select(x => x.x).Min();
+    int maxX = caveMap.Keys.Select(x => x.x).Max();
+
     bool sandAtRest = false;
     (int x, int y) sandDropPoint = (500, 0);
     int sandX = sandDropPoint.x;
-    int consoleOffset = _MaxX - (_MaxX - _MinX);
-    for (int y = sandDropPoint.y; y < _Bottom; y++)
+    int consoleOffset = maxX - (maxX - minX);
+    for (int y = sandDropPoint.y; y < bottom; y++)
     {
         // Draw 
-        Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
-        Console.Write("o");
+        //Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
+        //Console.Write("o");
 
         Thread.Sleep(0);
-
+        if (caveMap.ContainsKey((sandX, y)))
+        {
+            sandAtRest = false;
+            break;
+        }
         if (caveMap.ContainsKey((sandX, y + 1)) && !caveMap.ContainsKey((sandX - 1, y + 1)))
         {
-            Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
-            Console.Write(" ");
+            //Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
+            //Console.Write(" ");
             sandX -= 1;
-            if (sandX < _MinX)
+            if (sandX < minX)
             {
                 sandAtRest = false;
                 break;
@@ -126,10 +144,10 @@ bool DroppingSandFallsIntoTheAbyss(Dictionary<(int x, int y), string> caveMap)
         }
         else if (caveMap.ContainsKey((sandX, y + 1)) && !caveMap.ContainsKey((sandX + 1, y + 1)))
         {
-            Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
-            Console.Write(" ");
+            //Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
+            //Console.Write(" ");
             sandX += 1;
-            if (sandX > _MaxX)
+            if (sandX > maxX)
             {
                 sandAtRest = false;
                 break;
@@ -141,8 +159,8 @@ bool DroppingSandFallsIntoTheAbyss(Dictionary<(int x, int y), string> caveMap)
             sandAtRest = true;
             break;
         }
-        Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
-        Console.Write(" ");
+        //Console.SetCursorPosition(sandX + 8 - consoleOffset, y);
+        //Console.Write(" ");
     }
 
     return sandAtRest;
