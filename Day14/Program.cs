@@ -3,7 +3,7 @@
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
 // Set the Console Width now
-Console.BufferWidth = 600;
+//Console.BufferWidth = 600;
 
 Dictionary<(int x, int y), string> caveMap = new();
 
@@ -110,7 +110,6 @@ int StartSandDrop(Dictionary<(int x, int y), string> caveMap)
 
 bool DroppingSandFallsIntoTheAbyss(Dictionary<(int x, int y), string> caveMap)
 {
-    int top = 0;
     int bottom = caveMap.Keys.Select(x => x.y).Max();
     int minX = caveMap.Keys.Select(x => x.x).Min();
     int maxX = caveMap.Keys.Select(x => x.x).Max();
