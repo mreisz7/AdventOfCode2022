@@ -16,6 +16,10 @@ foreach (string valve in valves.Keys)
     valves[valve].MapShortestPathToEveryValve();
 }
 
+Console.WriteLine($"Challenge 1 Answer: {SolveChallenge1()}");
+
+Console.WriteLine($"Challenge 2 Answer: {SolveChallenge2()}");
+
 int SolveChallenge1()
 {
     string startingPoint = "AA";
@@ -96,11 +100,128 @@ int SolveChallenge1()
         }
     }
 
+    return maxTotalFlow;
+}
+
+
+int SolveChallenge2()
+{
+    string startingPoint = "AA";
+    int maxTotalFlow = -1;
+
+    Queue<(int totalFlowRate, (int timeRemaining, string currentValve) human, (int timeRemaining, string currentValve) elephant, List<string> closedValves)> queue = new();
+    queue.Enqueue((0, (26, startingPoint), (26, startingPoint), new()));
+
+    while (queue.Count > 0)
+    {
+        var potentialPath = queue.Dequeue();
+
+        if (potentialPath.human.timeRemaining == 0 && potentialPath.elephant.timeRemaining == 0)
+        {
+            if (potentialPath.totalFlowRate > maxTotalFlow)
+            {
+                Console.WriteLine(string.Join(", ", potentialPath.closedValves) + $" - ({potentialPath.totalFlowRate})");
+                maxTotalFlow = potentialPath.totalFlowRate;
+                continue;
+            }
+        }
+
+        if (potentialPath.human.currentValve != "XXX" && potentialPath.elephant.currentValve != "XXX")
+        {
+            Valve? currentValveHuman = potentialPath.human.currentValve != "XXX" ? valves[potentialPath.human.currentValve] : null;
+            Valve? currentValveElephant = potentialPath.elephant.currentValve != "XXX" ? valves[potentialPath.elephant.currentValve] : null;
+
+            Dictionary<string, int> potentialFlowRatesHuman = new(), potentialFlowRatesElephant = new();
+            List<(int flowRate, string nextStop)> stopsHuman = new(), stopsElephant = new();
+
+            if (currentValveHuman is not null && potentialPath.human.timeRemaining >= potentialPath.elephant.timeRemaining)
+            {
+                foreach (string valve in currentValveHuman.Valves.Keys)
+                {
+                    potentialFlowRatesHuman.Add(valve, currentValveHuman.GetPotentialFlowValue(valve, potentialPath.human.timeRemaining, potentialPath.closedValves));
+                }
+                stopsHuman = potentialFlowRatesHuman.Where(v => v.Value > 0)
+                        .OrderByDescending(v => v.Value)
+                        .Select(v => (v.Value, v.Key)).ToList();
+            }
+
+            if (currentValveElephant is not null && potentialPath.elephant.timeRemaining >= potentialPath.human.timeRemaining)
+            {
+                foreach (string valve in currentValveElephant.Valves.Keys)
+                {
+                    potentialFlowRatesElephant.Add(valve, currentValveElephant.GetPotentialFlowValue(valve, potentialPath.elephant.timeRemaining, potentialPath.closedValves));
+                }
+                stopsElephant = potentialFlowRatesElephant.Where(v => v.Value > 0)
+                        .OrderByDescending(v => v.Value)
+                        .Select(v => (v.Value, v.Key)).ToList();
+            }
+
+            if (stopsHuman.Count == 0 && stopsElephant.Count == 0)
+            {
+                queue.Enqueue((
+                    potentialPath.totalFlowRate,
+                    (0, "XXX"),
+                    (0, "XXX"),
+                    potentialPath.closedValves));
+            }
+            else
+            {
+                // human
+                foreach ((int flowRate, string nextStop) stop in stopsHuman)
+                {
+                    int flowRate = stop.flowRate;
+                    string nextStop = stop.nextStop;
+
+                    List<string> closedValves = new(potentialPath.closedValves);
+
+                    if (!closedValves.Contains(nextStop) && flowRate > 0)
+                        closedValves.Add(nextStop);
+
+                    int newTimeRemaining = potentialPath.human.timeRemaining - currentValveHuman.ShortestPaths[nextStop].Count;
+
+                    if (newTimeRemaining < 0)
+                        break;
+
+                    (int totalFlowRate, (int timeRemaining, string currentValve) human, (int timeRemaining, string currentValve) elephant, List<string> closedValves) newPotentialPath =
+                        (potentialPath.totalFlowRate + flowRate,
+                        (potentialPath.human.timeRemaining - currentValveHuman.ShortestPaths[nextStop].Count, nextStop),
+                        (potentialPath.elephant.timeRemaining, potentialPath.elephant.currentValve),
+                        closedValves);
+
+                    queue.Enqueue(newPotentialPath);
+                }
+
+                // elephant
+                foreach ((int flowRate, string nextStop) stop in stopsElephant)
+                {
+                    int flowRate = stop.flowRate;
+                    string nextStop = stop.nextStop;
+
+                    List<string> closedValves = new(potentialPath.closedValves);
+
+                    if (!closedValves.Contains(nextStop) && flowRate > 0)
+                        closedValves.Add(nextStop);
+
+                    int newTimeRemaining = potentialPath.human.timeRemaining - currentValveElephant.ShortestPaths[nextStop].Count;
+
+                    if (newTimeRemaining < 0)
+                        break;
+
+                    (int totalFlowRate, (int timeRemaining, string currentValve) human, (int timeRemaining, string currentValve) elephant, List<string> closedValves) newPotentialPath =
+                        (potentialPath.totalFlowRate + flowRate,
+                        (potentialPath.human.timeRemaining, potentialPath.human.currentValve),
+                        (potentialPath.elephant.timeRemaining - currentValveElephant.ShortestPaths[nextStop].Count, nextStop),
+                        closedValves);
+
+                    queue.Enqueue(newPotentialPath);
+                }
+            }
+        }
+    }
 
     return maxTotalFlow;
 }
 
-Console.WriteLine($"Challenge 1 Answer: {SolveChallenge1()}");
 
 partial class Valve
 {
