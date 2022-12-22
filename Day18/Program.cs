@@ -154,8 +154,6 @@ HashSet<(int x, int y, int z)> GetOuterShellOfDroplet(HashSet<(int x, int y, int
         {
             for (int y = yMin; y <= yMax; y++)
             {
-                fullCube.Add((x, y, z));
-
                 if (!visitedCubes.Contains((x, y, z)) || shell.Contains((x, y, z)))
                 {
                     filledShape.Add((x, y, z));
