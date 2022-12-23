@@ -1,14 +1,13 @@
 ﻿// Read in the Challenge input
-using System.Security.Cryptography.X509Certificates;
-
 //string inputData = File.ReadAllText(@".\ChallengeInput_Test.txt").Trim();
 string inputData = File.ReadAllText(@".\ChallengeInput.txt").Trim();
 
-Console.WriteLine($"Challenge 1 Answer: {SolveProblem1()}");
+Console.WriteLine($"Challenge 1 Answer: {SolveProblem1(2022)}");
 
-int SolveProblem1()
+Console.WriteLine($"Challenge 2 Answer: {SolveProblem2()}");
+
+int SolveProblem1(int numberOfCycles)
 {
-    int numberOfCycles = 2022;
     int result = 0;
     Cavern cavern = new();
     int jetCounter = 0;
@@ -21,6 +20,11 @@ int SolveProblem1()
         //{
         //    cavern.DrawCavern(boulder);
         //}
+
+        if (i != 0 && i % 100 == 0)
+        {
+            cavern.ReduceBoulderPileSize();
+        }
 
         bool boulderStillFalling = true;
         while (boulderStillFalling)
@@ -47,30 +51,47 @@ int SolveProblem1()
                 boulderStillFalling = false;
             }
         }
-
     }
 
     Console.WriteLine($"Number of Boulders: {cavern.NumberOfBouldersInPile}");
+    Console.WriteLine($"Jet Pattern Location: {jetCounter % inputData.Length}");
     result = cavern.GetTopOfBoulderPile();
 
     return result;
 }
 
-int SolveProblem2()
+long SolveProblem2()
 {
-    int numberOfCycles = 2022;
-    int result = 0;
     Cavern cavern = new();
     int jetCounter = 0;
 
-    for (int i = 0; i < numberOfCycles; i++)
+    Dictionary<int, List<(int boulderNumber, int bouldersSinceLast, int boulderheight, int boulderHeightDeltaSinceLast)>> pattern = new();
+
+    for (int i = 0; i < 10_000; i++)
     {
         Boulder boulder = GetBoulder((i % 5) + 1, 3, cavern.GetTopOfBoulderPile() + 4, cavern);
 
-        //if (i < 10)
-        //{
-        //    cavern.DrawCavern(boulder);
-        //}
+        if (i != 0 && i % 100 == 0)
+        {
+            cavern.ReduceBoulderPileSize();
+        }
+
+        if ((i % 5) + 1 == 1)
+        {
+            int jCounter = jetCounter % inputData.Length;
+            int newBoulderHeight = cavern.GetTopOfBoulderPile();
+            if (!pattern.ContainsKey(jCounter))
+            {
+                pattern.Add(jCounter, new());
+                pattern[jCounter].Add((i, -1, newBoulderHeight, -1));
+            }
+            else
+            {
+                int numberOfBouldersSinceLast = i - pattern[jCounter].Last().boulderNumber;
+                int boulderHeightDeltaSinceLast = newBoulderHeight - pattern[jCounter].Last().boulderheight;
+                pattern[jCounter].Add((i, numberOfBouldersSinceLast, newBoulderHeight, boulderHeightDeltaSinceLast));
+            }
+        }
 
         bool boulderStillFalling = true;
         while (boulderStillFalling)
@@ -97,13 +118,41 @@ int SolveProblem2()
                 boulderStillFalling = false;
             }
         }
-
     }
 
-    Console.WriteLine($"Number of Boulders: {cavern.NumberOfBouldersInPile}");
-    result = cavern.GetTopOfBoulderPile();
+    Dictionary<(int patternLength, int pileDelta), int> commonNumbers = new();
 
-    return result;
+    foreach (var p in pattern)
+    {
+        foreach (var bp in p.Value)
+        {
+            if (!commonNumbers.ContainsKey((bp.bouldersSinceLast, bp.boulderHeightDeltaSinceLast)))
+            {
+                commonNumbers.Add((bp.bouldersSinceLast, bp.boulderHeightDeltaSinceLast), 0);
+            }
+            commonNumbers[(bp.bouldersSinceLast, bp.boulderHeightDeltaSinceLast)]++;
+        }
+    }
+
+    (int patternLength, int pileDelta) = commonNumbers.OrderByDescending(x => x.Value).First().Key;
+
+    long numberOfCycles = 1_000_000_000_000;
+    long numberOfRepetitions = Math.DivRem(numberOfCycles, patternLength, out long remainder);
+
+    (int boulderNumber, int bouldersSinceLast, int boulderHeight, int boulderHeightDelta) frontPad = (-1, -1, -1, -1);
+
+    foreach (int i in pattern.Keys)
+    {
+        if (pattern[i].Any(x => x.boulderNumber == (int)remainder))
+        {
+            (frontPad.boulderNumber, _, frontPad.boulderHeight, _) = pattern[i].Where(x => x.boulderNumber == (int)remainder).First();
+            break;
+        }
+    }
+
+    long totalHeightOfPile = frontPad.boulderHeight + (numberOfRepetitions * pileDelta);
+
+    return totalHeightOfPile;
 }
 
 
@@ -322,6 +371,25 @@ class Cavern
         }
         Console.WriteLine("     |-------|");
         Console.WriteLine();
+    }
+
+    public void ReduceBoulderPileSize()
+    {
+        int column1MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column2MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column3MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column4MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column5MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column6MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+        int column7MaxHeight = BoulderPile.Where(b => b.x == 1).Select(b => b.y).Max();
+
+        int[] maxHeightArray = new[] { column1MaxHeight, column2MaxHeight, column3MaxHeight, column4MaxHeight, column5MaxHeight, column6MaxHeight, column7MaxHeight };
+
+        // Get the minimum max height to make the new bottom
+        int minMax = maxHeightArray.Min();
+
+        // Now remove everything below this point since everything below is no longer relevant
+        BoulderPile.RemoveWhere(b => b.y > minMax + 100);
     }
 
     public int GetTopOfBoulderPile()
