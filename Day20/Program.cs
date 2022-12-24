@@ -1,6 +1,4 @@
 ﻿// Read in the Challenge input
-using System.Globalization;
-
 //string[] inputData = File.ReadAllLines(@".\ChallengeInput_Test.txt");
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
