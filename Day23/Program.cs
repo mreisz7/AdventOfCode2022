@@ -15,9 +15,12 @@ for (int y = 0; y < inputData.Length; y++)
     }
 }
 
-DrawMap(ElfCoordinates);
+int Challenge1Answer = -1;
+int Challenge2Answer = -1;
 
-for (int i = 1; i <= 10; i++)
+//DrawMap(ElfCoordinates);
+
+for (int i = 1; i <= 1000; i++)
 {
     // Create a dictionary that stores the proposed new coordinate to the key, and the list of elfs attempting to move there to the value
     Dictionary<(int x, int y), List<(int x, int y)>> NewElfCoordinates = new();
@@ -98,23 +101,25 @@ for (int i = 1; i <= 10; i++)
         }
     }
 
+    if (ElfCoordinates.SetEquals(NextRoundElfCoordinates))
+    {
+        Challenge2Answer = i;
+        break;
+    }
+
     ElfCoordinates = new(NextRoundElfCoordinates);
-    DrawMap(ElfCoordinates);
+
+    if (i == 10)
+    {
+        Challenge1Answer = CalculatePart1Answer(ElfCoordinates);
+    }
+
+    //DrawMap(ElfCoordinates);
 }
 
-// Get bounds of the elf coordinates
-int minX = ElfCoordinates.Min(c => c.x);
-int maxX = ElfCoordinates.Max(c => c.x);
-int minY = ElfCoordinates.Min(c => c.y);
-int maxY = ElfCoordinates.Max(c => c.y);
+Console.WriteLine($"Challenge 1 Answer: {Challenge1Answer}");
 
-int width = Math.Abs(maxX - minX) + 1;
-int height = Math.Abs(maxY - minY) + 1;
-
-int AnswerChallenge1 = (width * height) - ElfCoordinates.Count;
-
-
-Console.WriteLine($"Challenge 1 Answer: {AnswerChallenge1}");
+Console.WriteLine($"Challenge 2 Answer: {Challenge2Answer}");
 
 (int x, int y) NorthWest((int x, int y) coord) => (coord.x - 1, coord.y - 1);
 (int x, int y) North((int x, int y) coord) =>     (coord.x, coord.y - 1);
@@ -216,4 +221,17 @@ void DrawMap(HashSet<(int x, int y)> coordinates)
         Console.WriteLine();
     }
     Console.WriteLine();
+}
+
+int CalculatePart1Answer(HashSet<(int x, int y)> ElfCoordinates)
+{
+    int minX = ElfCoordinates.Min(c => c.x);
+    int maxX = ElfCoordinates.Max(c => c.x);
+    int minY = ElfCoordinates.Min(c => c.y);
+    int maxY = ElfCoordinates.Max(c => c.y);
+
+    int width = Math.Abs(maxX - minX) + 1;
+    int height = Math.Abs(maxY - minY) + 1;
+
+    return (width * height) - ElfCoordinates.Count;
 }
