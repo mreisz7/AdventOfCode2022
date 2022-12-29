@@ -1,7 +1,5 @@
 ﻿// Read in the Challenge input
 //string[] inputData = File.ReadAllLines(@".\ChallengeInput_Test.txt");
-using System.Linq;
-
 string[] inputData = File.ReadAllLines(@".\ChallengeInput.txt");
 
 Dictionary<int, List<((int x, int y) coordinates, Direction direction)>> stormPredictor = new() { { 0, new()} };
@@ -114,71 +112,87 @@ foreach (int turn in stormPredictor.Keys)
     stormLocation.Add(turn, stormPredictor[turn].Select(x => x.coordinates).ToHashSet());
 }
 
-Stack<((int x, int y) coordinate, int turn)> hikingQueue = new();
-hikingQueue.Push((startingCoordinate, 0));
-int minimumNumberOfTurns = int.MaxValue;
-HashSet<((int x, int y) coordinate, int turn)> visited = new();
-
-while (hikingQueue.Count > 0)
+int FindPathLength((int x, int y) start, (int x, int y) end, int startingTurn)
 {
-    ((int x, int y) coordinate, int turn) = hikingQueue.Pop();
-    visited.Add((coordinate, turn));
-    int nextTurn = turn + 1;
+    Stack<((int x, int y) coordinate, int turn)> hikingQueue = new();
+    hikingQueue.Push((start, startingTurn));
+    int minimumTurnsToComplete = int.MaxValue;
+    HashSet<((int x, int y) coordinate, int turn)> visited = new();
 
-    if (coordinate == endingCoordinate && turn < minimumNumberOfTurns)
+    while (hikingQueue.Count > 0)
     {
-        minimumNumberOfTurns = turn;
-        continue;
+        ((int x, int y) coordinate, int turn) = hikingQueue.Pop();
+        visited.Add((coordinate, turn));
+        int nextTurn = turn + 1;
+
+        if (coordinate == end && turn < minimumTurnsToComplete)
+        {
+            minimumTurnsToComplete = turn;
+            continue;
+        }
+
+        // If this has taken longer than an already established minimum then don't go any further
+        if (turn > minimumTurnsToComplete)
+        {
+            continue;
+        }
+
+        // If this path takes longer than the turns we have calculated then don't bother continuing with this path
+        if (nextTurn > stormPredictor.Keys.Count - 1)
+        {
+            continue;
+        }
+
+        // Wait a turn
+        if (!stormLocation[nextTurn].Contains(coordinate) && !visited.Contains((coordinate, nextTurn)))
+        {
+            hikingQueue.Push((coordinate, nextTurn));
+        }
+
+        // Move up
+        (int x, int y) upCoordinate = (coordinate.x, coordinate.y - 1);
+        if (!stormLocation[nextTurn].Contains(upCoordinate) && !boundingBox.Contains(upCoordinate) && upCoordinate.y >= minY && !visited.Contains((upCoordinate, nextTurn)))
+        {
+            hikingQueue.Push((upCoordinate, nextTurn));
+        }
+
+        // Move down
+        (int x, int y) downCoordinate = (coordinate.x, coordinate.y + 1);
+        if (!stormLocation[nextTurn].Contains(downCoordinate) && !boundingBox.Contains(downCoordinate) && upCoordinate.y + 1 < maxY && !visited.Contains((downCoordinate, nextTurn)))
+        {
+            hikingQueue.Push((downCoordinate, nextTurn));
+        }
+
+        // Move left
+        (int x, int y) leftCoordinate = (coordinate.x - 1, coordinate.y);
+        if (!stormLocation[nextTurn].Contains(leftCoordinate) && !boundingBox.Contains(leftCoordinate) && !visited.Contains((leftCoordinate, nextTurn)))
+        {
+            hikingQueue.Push((leftCoordinate, nextTurn));
+        }
+
+        // Move right
+        (int x, int y) rightCoordinate = (coordinate.x + 1, coordinate.y);
+        if (!stormLocation[nextTurn].Contains(rightCoordinate) && !boundingBox.Contains(rightCoordinate) && !visited.Contains((rightCoordinate, nextTurn)))
+        {
+            hikingQueue.Push((rightCoordinate, nextTurn));
+        }
     }
 
-    // If this has taken longer than an already established minimum then don't go any further
-    if (turn > minimumNumberOfTurns)
+    if (minimumTurnsToComplete == int.MaxValue)
     {
-        continue;
+        throw new Exception("A value wasn't found!");
     }
 
-    // If this path takes longer than 1,000 turns then don't bother continuing with this path
-    if (nextTurn > stormPredictor.Keys.Count - 1)
-    {
-        continue;
-    }
-
-    // Wait a turn
-    if (!stormLocation[nextTurn].Contains(coordinate) && !visited.Contains((coordinate, nextTurn)))
-    {
-        hikingQueue.Push((coordinate, nextTurn));
-    }
-
-    // Move up
-    (int x, int y) upCoordinate = (coordinate.x, coordinate.y - 1);
-    if (!stormLocation[nextTurn].Contains(upCoordinate) && !boundingBox.Contains(upCoordinate) && upCoordinate.y > 0 && !visited.Contains((upCoordinate, nextTurn)))
-    {
-        hikingQueue.Push((upCoordinate, nextTurn));
-    }
-
-    // Move down
-    (int x, int y) downCoordinate = (coordinate.x, coordinate.y + 1);
-    if (!stormLocation[nextTurn].Contains(downCoordinate) && !boundingBox.Contains(downCoordinate) && !visited.Contains((downCoordinate, nextTurn)))
-    {
-        hikingQueue.Push((downCoordinate, nextTurn));
-    }
-
-    // Move left
-    (int x, int y) leftCoordinate = (coordinate.x - 1, coordinate.y);
-    if (!stormLocation[nextTurn].Contains(leftCoordinate) && !boundingBox.Contains(leftCoordinate) && !visited.Contains((leftCoordinate, nextTurn)))
-    {
-        hikingQueue.Push((leftCoordinate, nextTurn));
-    }
-
-    // Move right
-    (int x, int y) rightCoordinate = (coordinate.x + 1, coordinate.y);
-    if (!stormLocation[nextTurn].Contains(rightCoordinate) && !boundingBox.Contains(rightCoordinate) && !visited.Contains((rightCoordinate, nextTurn)))
-    {
-        hikingQueue.Push((rightCoordinate, nextTurn));
-    }
+    return minimumTurnsToComplete - startingTurn;
 }
 
-Console.WriteLine($"Challenge 1 Answer: {minimumNumberOfTurns}");
+int firstLegLength = FindPathLength(startingCoordinate, endingCoordinate, 0);
+int secondLegLength = FindPathLength(endingCoordinate, startingCoordinate, firstLegLength);
+int thirdLegLength = FindPathLength(startingCoordinate, endingCoordinate, firstLegLength + secondLegLength);
+
+Console.WriteLine($"Challenge 1 Answer: {firstLegLength}");
+
+Console.WriteLine($"Challenge 2 Answer: {firstLegLength + secondLegLength + thirdLegLength}");
 
 enum Direction
 {
