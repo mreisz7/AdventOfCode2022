@@ -43,6 +43,11 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
 
     int maximumNumberOfGeodesCollected = 0;
 
+    // Find max resources needed for any single robot
+    int maxOre = Max(blueprint.OreRobotOreCost, blueprint.ClayRobotOreCost, blueprint.ObsidianRobotOreCost, blueprint.GeodeRobotOreCost);
+    int maxClay = blueprint.ObsidianRobotClayCost;
+    int maxObsidian = blueprint.GeodeRobotObsidianCost;
+
     while (queue.Count > 0)
     {
         ((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn) current = queue.Pop();
@@ -56,19 +61,24 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
         List<int> scenariosToPursue = new();
 
         // Build an ore robot
-        if (current.resources.ore >= blueprint.OreRobotOreCost)
+        if (current.robots.ore < maxOre && 
+            current.resources.ore >= blueprint.OreRobotOreCost)
             scenariosToPursue.Add(1);
 
         // Build a clay robot
-        if (current.resources.ore >= blueprint.ClayRobotOreCost)
+        if (current.robots.clay < maxClay && 
+            current.resources.ore >= blueprint.ClayRobotOreCost)
             scenariosToPursue.Add(2);
 
         // Build an obsidian robot
-        if (current.resources.ore >= blueprint.ObsidianRobotOreCost && current.resources.clay >= blueprint.ObsidianRobotClayCost)
+        if (current.robots.obsidian < maxObsidian && 
+            current.resources.ore >= blueprint.ObsidianRobotOreCost && 
+            current.resources.clay >= blueprint.ObsidianRobotClayCost)
             scenariosToPursue.Add(3);
 
         // Build a geode robot
-        if (current.resources.ore >= blueprint.GeodeRobotOreCost && current.resources.obsidian >= blueprint.GeodeRobotObsidianCost)
+        if (current.resources.ore >= blueprint.GeodeRobotOreCost && 
+            current.resources.obsidian >= blueprint.GeodeRobotObsidianCost)
             scenariosToPursue.Add(4);
 
         // Increase the turn
@@ -80,6 +90,11 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
         current.resources.obsidian += current.robots.obsidian;
         current.resources.geode += current.robots.geode;
 
+        // Prune if you can't make enough geode robots in the time remaining to improve on the current score
+        int timeRemaining = maxTurns - current.turn;
+        if (current.resources.geode + (current.robots.geode * timeRemaining) + timeRemaining + 25 < maximumNumberOfGeodesCollected)
+            continue;
+
         // If more Geodes have been collected than previously recorded then increase the count
         if (current.turn == maxTurns)
         {
@@ -88,16 +103,21 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
             continue;
         }
 
-        // Prune if you can't make enough geode robots in the time remaining to improve on the current score
-        int timeRemaining = maxTurns - current.turn;
-        if (current.resources.geode + (current.robots.geode * timeRemaining) + timeRemaining <= maximumNumberOfGeodesCollected)
+        // Now enqueue the build scenarios
+        if (scenariosToPursue.Contains(4))
+        {
+            var buildGeodeRobotScenario = current;
+            buildGeodeRobotScenario.resources.ore -= blueprint.GeodeRobotOreCost;
+            buildGeodeRobotScenario.resources.obsidian -= blueprint.GeodeRobotObsidianCost;
+            buildGeodeRobotScenario.robots.geode++;
+            queue.Push(buildGeodeRobotScenario);
             continue;
+        }
 
         // Enqueue the "Do Nothing" scenario
         var doNothingScenario = current;
         queue.Push(doNothingScenario);
 
-        // Now enqueue the build scenarios
         if (scenariosToPursue.Contains(1))
         {
             var buildOreRobotScenario = current;
@@ -122,18 +142,14 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
             buildObsidianRobotScenario.robots.obsidian++;
             queue.Push(buildObsidianRobotScenario);
         }
-
-        if (scenariosToPursue.Contains(4))
-        {
-            var buildGeodeRobotScenario = current;
-            buildGeodeRobotScenario.resources.ore -= blueprint.GeodeRobotOreCost;
-            buildGeodeRobotScenario.resources.obsidian -= blueprint.GeodeRobotObsidianCost;
-            buildGeodeRobotScenario.robots.geode++;
-            queue.Push(buildGeodeRobotScenario);
-        }
     }
 
     return maximumNumberOfGeodesCollected;
+}
+
+static int Max(params int[] numberItems)
+{
+    return numberItems.Max();
 }
 
 partial class Blueprint
