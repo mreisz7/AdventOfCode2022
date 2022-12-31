@@ -15,24 +15,37 @@ Dictionary<int, int> maximumGeodesCollected = new();
 foreach (Blueprint blueprint in blueprints.Values)
 {
     Console.WriteLine($"Starting calculation for blueprint #{blueprint.BlueprintNumber}");
-    maximumGeodesCollected.Add(blueprint.BlueprintNumber, MaximumNumberOfGeodesCollected(blueprint));
+    maximumGeodesCollected.Add(blueprint.BlueprintNumber, MaximumNumberOfGeodesCollected(blueprint, 24));
 }
 
 int Challenge1Answer = maximumGeodesCollected.Sum(x => x.Key * x.Value);
 
 Console.WriteLine($"Challenge 1 Answer: {Challenge1Answer}");
 
-int MaximumNumberOfGeodesCollected(Blueprint blueprint)
+List<Blueprint> firstThreeBlueprints = blueprints.Where(x => x.Key <= 3).Select(x => x.Value).ToList();
+
+Dictionary<int, int> maximumGeodesCollectedPart2 = new();
+foreach (Blueprint blueprint in firstThreeBlueprints)
 {
-    Queue<((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn)> queue = new();
-    queue.Enqueue(((1, 0, 0, 0), (0, 0, 0, 0), 0));
+    Console.WriteLine($"Starting calculation for blueprint #{blueprint.BlueprintNumber}");
+    maximumGeodesCollectedPart2.Add(blueprint.BlueprintNumber, MaximumNumberOfGeodesCollected(blueprint, 32));
+}
+
+int Challenge2Answer = maximumGeodesCollectedPart2[1] * maximumGeodesCollectedPart2[2] * maximumGeodesCollectedPart2[3];
+
+Console.WriteLine($"Challenge 2 Answer: {Challenge2Answer}");
+
+int MaximumNumberOfGeodesCollected(Blueprint blueprint, int maxTurns)
+{
+    Stack<((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn)> queue = new();
+    queue.Push(((1, 0, 0, 0), (0, 0, 0, 0), 0));
     HashSet<((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn)> tried = new();
 
     int maximumNumberOfGeodesCollected = 0;
 
     while (queue.Count > 0)
     {
-        ((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn) current = queue.Dequeue();
+        ((int ore, int clay, int obsidian, int geode) robots, (int ore, int clay, int obsidian, int geode) resources, int turn) current = queue.Pop();
 
         if (tried.Contains(current))
             continue;
@@ -68,18 +81,21 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint)
         current.resources.geode += current.robots.geode;
 
         // If more Geodes have been collected than previously recorded then increase the count
-        if (current.turn == 24 && current.resources.geode > maximumNumberOfGeodesCollected)
+        if (current.turn == maxTurns)
         {
-            maximumNumberOfGeodesCollected = current.resources.geode;
+            if (current.resources.geode > maximumNumberOfGeodesCollected)
+                maximumNumberOfGeodesCollected = current.resources.geode;
             continue;
         }
 
-        if (current.turn == 24)
+        // Prune if you can't make enough geode robots in the time remaining to improve on the current score
+        int timeRemaining = maxTurns - current.turn;
+        if (current.resources.geode + (current.robots.geode * timeRemaining) + timeRemaining <= maximumNumberOfGeodesCollected)
             continue;
 
         // Enqueue the "Do Nothing" scenario
         var doNothingScenario = current;
-        queue.Enqueue(doNothingScenario);
+        queue.Push(doNothingScenario);
 
         // Now enqueue the build scenarios
         if (scenariosToPursue.Contains(1))
@@ -87,7 +103,7 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint)
             var buildOreRobotScenario = current;
             buildOreRobotScenario.resources.ore -= blueprint.OreRobotOreCost;
             buildOreRobotScenario.robots.ore++;
-            queue.Enqueue(buildOreRobotScenario);
+            queue.Push(buildOreRobotScenario);
         }
 
         if (scenariosToPursue.Contains(2))
@@ -95,7 +111,7 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint)
             var buildClayRobotScenario = current;
             buildClayRobotScenario.resources.ore -= blueprint.ClayRobotOreCost;
             buildClayRobotScenario.robots.clay++;
-            queue.Enqueue(buildClayRobotScenario);
+            queue.Push(buildClayRobotScenario);
         }
 
         if (scenariosToPursue.Contains(3))
@@ -104,7 +120,7 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint)
             buildObsidianRobotScenario.resources.ore -= blueprint.ObsidianRobotOreCost;
             buildObsidianRobotScenario.resources.clay -= blueprint.ObsidianRobotClayCost;
             buildObsidianRobotScenario.robots.obsidian++;
-            queue.Enqueue(buildObsidianRobotScenario);
+            queue.Push(buildObsidianRobotScenario);
         }
 
         if (scenariosToPursue.Contains(4))
@@ -113,7 +129,7 @@ int MaximumNumberOfGeodesCollected(Blueprint blueprint)
             buildGeodeRobotScenario.resources.ore -= blueprint.GeodeRobotOreCost;
             buildGeodeRobotScenario.resources.obsidian -= blueprint.GeodeRobotObsidianCost;
             buildGeodeRobotScenario.robots.geode++;
-            queue.Enqueue(buildGeodeRobotScenario);
+            queue.Push(buildGeodeRobotScenario);
         }
     }
 
